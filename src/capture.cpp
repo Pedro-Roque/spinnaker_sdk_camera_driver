@@ -217,7 +217,7 @@ void acquisition::Capture::load_cameras() {
 
     for (int i=0; i<numCameras_; i++) {
         acquisition::Camera cam(camList_.GetByIndex(i));
-        ROS_INFO_STREAM("  -"<<cam.get_id());
+        ROS_INFO_STREAM("  -"<<cam.get_serial());
        }
 
     bool master_set = false;
@@ -230,9 +230,9 @@ void acquisition::Capture::load_cameras() {
         
             acquisition::Camera cam(camList_.GetByIndex(i));
             
-            if (cam.get_id().compare(cam_ids_[j]) == 0) {
+            if (cam.get_serial().compare(cam_ids_[j]) == 0) {
                 current_cam_found=true;
-                if (cam.get_id().compare(master_cam_id_) == 0) {
+                if (cam.get_serial().compare(master_cam_id_) == 0) {
                     cam.make_master();
                     master_set = true;
                     MASTER_CAM_ = cam_counter;
@@ -643,7 +643,7 @@ void acquisition::Capture::init_cameras(bool soft = false) {
                     cams[i].setEnumValue("PixelFormat", "BGR8");
                     else
                         cams[i].setEnumValue("PixelFormat", "Mono8");
-                cams[i].setEnumValue("AcquisitionMode", "Continuous");
+                // cams[i].setEnumValue("AcquisitionMode", "Continuous");
                 
                 // set only master to be software triggered
                 if (cams[i].is_master()) { 
@@ -653,10 +653,12 @@ void acquisition::Capture::init_cameras(bool soft = false) {
                       cams[i].setBoolValue("AcquisitionFrameRateEnable", false);
                       //cams[i].setFloatValue("AcquisitionFrameRate", 170);
                     }else{
-                      cams[i].setEnumValue("TriggerMode", "On");
+                      cams[i].setEnumValue("TriggerMode", "Off");
                       cams[i].setEnumValue("LineSelector", "Line2");
                       cams[i].setEnumValue("LineMode", "Output");
-                      cams[i].setEnumValue("TriggerSource", "Software");
+                      //cams[i].setEnumValue("TriggerSource", "Software");
+                      cams[i].setBoolValue("AcquisitionFrameRateEnable", true);
+                      cams[i].setFloatValue("AcquisitionFrameRate", 90);
                     }
                     //cams[i].setEnumValue("LineSource", "ExposureActive");
 
@@ -891,7 +893,7 @@ void acquisition::Capture::run_soft_trig() {
 
     int count = 0;
     
-    cams[MASTER_CAM_].trigger();
+    //cams[MASTER_CAM_].trigger();
     get_mat_images();
     if (SAVE_) {
         count++;
@@ -907,76 +909,77 @@ void acquisition::Capture::run_soft_trig() {
 
             double t = ros::Time::now().toSec();
 
-            if (LIVE_) {
-                if (GRID_VIEW_) {
-                    update_grid();
-                    imshow("Acquisition", grid_);
-                } else {
-                    imshow("Acquisition", frames_[CAM_]);
-                    char title[50];
-                    sprintf(title, "cam # = %d, cam ID = %s, cam name = %s", CAM_, cam_ids_[CAM_].c_str(), cam_names_[CAM_].c_str());
-                    displayOverlay("Acquisition", title);
-                }
-            }
+            // if (LIVE_) {
+            //     if (GRID_VIEW_) {
+            //         update_grid();
+            //         imshow("Acquisition", grid_);
+            //     } else {
+            //         imshow("Acquisition", frames_[CAM_]);
+            //         char title[50];
+            //         sprintf(title, "cam # = %d, cam ID = %s, cam name = %s", CAM_, cam_ids_[CAM_].c_str(), cam_names_[CAM_].c_str());
+            //         displayOverlay("Acquisition", title);
+            //     }
+            // }
 
-            int key = cvWaitKey(1);
-            ROS_DEBUG_STREAM("Key press: "<<(key & 255)<<endl);
+            // int key = cvWaitKey(1);
+            // ROS_DEBUG_STREAM("Key press: "<<(key & 255)<<endl);
             
-            if ( (key & 255)!=255 ) {
+            // if ( (key & 255)!=255 ) {
 
-                if ( (key & 255)==83 ) {
-                    if (CAM_<numCameras_-1) // RIGHT ARROW
-                        CAM_++;
-                } else if( (key & 255)==81 ) { // LEFT ARROW
-                    if (CAM_>0)
-                        CAM_--;
-                } else if( (key & 255)==84 && MANUAL_TRIGGER_) { // t
-                    cams[MASTER_CAM_].trigger();
-                    get_mat_images();
-                } else if( (key & 255)==32 && !SAVE_) { // SPACE
-                    ROS_INFO_STREAM("Saving frame...");
-                    if (SAVE_BIN_)
-                        save_binary_frames(0);
-                        else{
-                            save_mat_frames(0);
-                            if (!EXPORT_TO_ROS_){
-                                ROS_INFO_STREAM("Exporting frames to ROS...");
-                                export_to_ROS();
-                            }
-                        }
-                } else if( (key & 255)==27 ) {  // ESC
-                    ROS_INFO_STREAM("Terminating...");
-                    cvDestroyAllWindows();
-                    ros::shutdown();
-                    break;
-                }
-                ROS_DEBUG_STREAM("active cam switched to: "<<CAM_);
-            }
-
+            //     if ( (key & 255)==83 ) {
+            //         if (CAM_<numCameras_-1) // RIGHT ARROW
+            //             CAM_++;
+            //     } else if( (key & 255)==81 ) { // LEFT ARROW
+            //         if (CAM_>0)
+            //             CAM_--;
+            //     } else if( (key & 255)==84 && MANUAL_TRIGGER_) { // t
+            //         cams[MASTER_CAM_].trigger();
+            //         get_mat_images();
+            //     } else if( (key & 255)==32 && !SAVE_) { // SPACE
+            //         ROS_INFO_STREAM("Saving frame...");
+            //         if (SAVE_BIN_)
+            //             save_binary_frames(0);
+            //             else{
+            //                 save_mat_frames(0);
+            //                 if (!EXPORT_TO_ROS_){
+            //                     ROS_INFO_STREAM("Exporting frames to ROS...");
+            //                     export_to_ROS();
+            //                 }
+            //             }
+            //     } else if( (key & 255)==27 ) {  // ESC
+            //         ROS_INFO_STREAM("Terminating...");
+            //         cvDestroyAllWindows();
+            //         ros::shutdown();
+            //         break;
+            //     }
+            //     ROS_DEBUG_STREAM("active cam switched to: "<<CAM_);
+            // }
+            //cams[MASTER_CAM_].trigger();
+            get_mat_images();
             double disp_time_ = ros::Time::now().toSec() - t;
 
             // Call update functions
-            if (!MANUAL_TRIGGER_) {
-                cams[MASTER_CAM_].trigger();
-                get_mat_images();
-            }
+            // if (!MANUAL_TRIGGER_) {
+            //     cams[MASTER_CAM_].trigger();
+            //     get_mat_images();
+            // }
 
-            if (SAVE_) {
-                count++;
-                if (SAVE_BIN_)
-                    save_binary_frames(0);
-                else
-                    save_mat_frames(0);
-            }
+            // if (SAVE_) {
+            //     count++;
+            //     if (SAVE_BIN_)
+            //         save_binary_frames(0);
+            //     else
+            //         save_mat_frames(0);
+            // }
 
-            if (FIXED_NUM_FRAMES_) {
-                cout<<"Nframes "<< nframes_<<endl;
-                if (count > nframes_) {
-                    ROS_INFO_STREAM(nframes_ << " frames recorded. Terminating...");
-                    cvDestroyAllWindows();
-                    break;
-                }
-            }
+            // if (FIXED_NUM_FRAMES_) {
+            //     cout<<"Nframes "<< nframes_<<endl;
+            //     if (count > nframes_) {
+            //         ROS_INFO_STREAM(nframes_ << " frames recorded. Terminating...");
+            //         cvDestroyAllWindows();
+            //         break;
+            //     }
+            // }
             
             if (EXPORT_TO_ROS_) export_to_ROS();
             //cams[MASTER_CAM_].targetGreyValueTest();

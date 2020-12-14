@@ -60,6 +60,14 @@ namespace acquisition {
         // void setTriggerOverlapOff();
 
         string get_id() { return string(pCam_->GetUniqueID()); }
+        string get_serial() { 
+            INodeMap& nodeMapTLDevice = pCam_->GetTLDeviceNodeMap();
+            gcstring deviceSerialNumber("");
+            CStringPtr ptrStringSerial = nodeMapTLDevice.GetNode("DeviceSerialNumber");
+            deviceSerialNumber = ptrStringSerial->GetValue();
+            // gcstring serial_str = serial_num->GetValue();
+            return string(deviceSerialNumber.c_str()); 
+        }   
         void make_master() { MASTER_ = true; ROS_DEBUG_STREAM( "camera " << get_id() << " set as master"); }
         bool is_master() { return MASTER_; }
         void set_color(bool flag) { COLOR_ = flag; }
